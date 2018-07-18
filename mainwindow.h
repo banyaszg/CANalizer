@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QProgressBar>
 #include "logmodel.h"
 
 namespace Ui {
@@ -17,17 +18,15 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_actionLoad_Noise_log_triggered();
-    void on_actionLoad_Signal_log_triggered();
-
     void on_actionClear_triggered();
+    void on_actionLoad_triggered();
 
-protected:
-    void loadLogs(bool signal);
+    void on_actionSignal_toggled(bool arg1);
 
 private:
     Ui::MainWindow *ui;
     LogModel *model;
+    QProgressBar *progressBar;
 };
 
 #endif // MAINWINDOW_H

@@ -15,9 +15,12 @@ CONFIG += c++14
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    logmodel.cpp
+    logmodel.cpp \
+    logdialog.cpp
 
 HEADERS  += mainwindow.h \
-    logmodel.h
+    logmodel.h \
+    logdialog.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    logdialog.ui

@@ -11,6 +11,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->tableView->setModel(model);
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
+    connect(ui->tableView, &QTableView::doubleClicked, model, &LogModel::onDoubleClicked);
+
+    progressBar = new QProgressBar(this);
+    progressBar->setMaximumHeight(16);
+    progressBar->setMaximumWidth(200);
+    progressBar->setTextVisible(false);
+    progressBar->setMinimum(0);
+    progressBar->setMaximum(100);
 }
 
 MainWindow::~MainWindow()
@@ -18,24 +27,19 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_actionLoad_Noise_log_triggered()
+void MainWindow::on_actionClear_triggered()
 {
-    loadLogs(false);
+    model->clear();
 }
 
-void MainWindow::on_actionLoad_Signal_log_triggered()
-{
-    loadLogs(true);
-}
-
-void MainWindow::loadLogs(bool signal)
+void MainWindow::on_actionLoad_triggered()
 {
     const QString DEFAULT_DIR_KEY("default_dir");
 
     QSettings settings;
 
     QString selectedFile = QFileDialog::getOpenFileName(
-            this, QString("Select a %1 logfile").arg(signal ? "signal" : "noise"),
+            this, QString("Select a logfile"),
                 settings.value(DEFAULT_DIR_KEY).toString());
 
     if(!selectedFile.isEmpty())
@@ -43,11 +47,20 @@ void MainWindow::loadLogs(bool signal)
         QDir currentDir;
         settings.setValue(DEFAULT_DIR_KEY,
                             currentDir.absoluteFilePath(selectedFile));
-        model->loadLog(selectedFile, signal);
+
+        statusBar()->addPermanentWidget(progressBar, 0);
+        statusBar()->showMessage(QString("Loading"));
+        connect(model, &LogModel::progressValue, progressBar, &QProgressBar::setValue);
+
+        model->loadLog(selectedFile);
+
+        disconnect(progressBar);
+        statusBar()->clearMessage();
+        statusBar()->removeWidget(progressBar);
     }
 }
 
-void MainWindow::on_actionClear_triggered()
+void MainWindow::on_actionSignal_toggled(bool arg1)
 {
-    model->clear();
+    model->setSignalState(arg1);
 }

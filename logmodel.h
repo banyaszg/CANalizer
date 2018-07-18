@@ -33,7 +33,7 @@ public:
         this->data = data;
         status = None;
         bitmask.fill(0xff, data.size());
-        bitch.fill(0, data.size());
+        chbits.fill(0, data.size());
     }
 
     QString can;
@@ -41,8 +41,9 @@ public:
     Status status;
     QByteArray data;
     QByteArray bitmask;
-    QByteArray bitch;
-    QList<MessageLog> log;
+    QByteArray chbits;
+    QVector<MessageLog> log;
+    QVector<MessageLog> changeLog;
 };
 
 class LogModel : public QAbstractTableModel
@@ -55,11 +56,25 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void loadLog(QString fname, bool signal);
+    void loadLog(QString fname);
     void clear();
 
+    void setSignalState(bool signal) { _signal = signal; }
+    bool signalState() { return _signal; }
+
+signals:
+    void progressValue(int);
+
+public slots:
+    void onDoubleClicked(const QModelIndex &index);
+
 protected:
-    QList<CANMessage> _msgs;
+    void procMessage(const QString &sec, const QString &usec, const QString &can, const QString &id, const QByteArray &data, bool update = true);
+    void applyMask(int ix, bool update = true);
+
+protected:
+    bool _signal;
+    QVector<CANMessage> _msgs;
 };
 
 #endif // LOGMODEL_H
