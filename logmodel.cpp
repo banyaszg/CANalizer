@@ -190,7 +190,7 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
         {
             // match
             found = true;
-            if(msg.status == CANMessage::New) _msgs[i].status = CANMessage::None;
+            if(update && (msg.status == CANMessage::New)) _msgs[i].status = CANMessage::None;
 
             if(_signal)
             {
@@ -247,7 +247,7 @@ void LogModel::applyMask(int ix, bool update)
 
     _msgs[ix].chbits.fill(0, msg.data.size());
     _msgs[ix].changeLog.clear();
-    _msgs[ix].status = CANMessage::None;
+    if(update) _msgs[ix].status = CANMessage::None;
 
     if(msg.log.empty()) return;
 
@@ -273,7 +273,7 @@ void LogModel::applyMask(int ix, bool update)
         }
         if(changed)
         {
-            _msgs[ix].status = CANMessage::Changes;
+            if(update || (_msgs[ix].status != CANMessage::New)) _msgs[ix].status = CANMessage::Changes;
             MessageLog chlog(log.sec, log.usec, log.data);
             _msgs[ix].changeLog.append(chlog);
         }
