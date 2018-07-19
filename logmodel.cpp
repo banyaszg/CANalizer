@@ -49,7 +49,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
 {
     if(role == Qt::DisplayRole)
     {
-        const CANMessage msg = _msgs[index.row()];
+        const CANMessage &msg = _msgs[index.row()];
         switch(index.column())
         {
         case CAN:
@@ -70,7 +70,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     }
     else if(role == Qt::ForegroundRole)
     {
-        const CANMessage msg = _msgs[index.row()];
+        const CANMessage &msg = _msgs[index.row()];
         if(index.column() == 1)
         {
             switch(msg.status)
@@ -87,14 +87,13 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     }
     else if(role == Qt::ToolTipRole)
     {
-        if(index.column() == 5)
+        if(index.column() == CHCNT)
         {
             const CANMessage msg = _msgs[index.row()];
             QString res;
-            for(int i = 0; i < msg.changeLog.size(); i++)
+            foreach(const MessageLog &item, msg.changeLog)
             {
-                res += QString("(%1.%2) %3").arg(msg.changeLog[i].sec).arg(msg.changeLog[i].usec).arg(QString(msg.changeLog[i].data.toHex()));
-                if(i < (msg.changeLog.size() - 1)) res += "\n";
+                res += QString("(%1.%2) %3\n").arg(item.sec).arg(item.usec).arg(QString(item.data.toHex()));
             }
             return res;
         }
@@ -173,7 +172,7 @@ void LogModel::onDoubleClicked(const QModelIndex &index)
 {
     if(index.column() == CHCNT)
     {
-        const CANMessage msg = _msgs[index.row()];
+        const CANMessage &msg = _msgs[index.row()];
 
         LogDialog dlg(NULL, QString("%1:%2").arg(msg.can).arg(msg.id), msg.changeLog, msg.chbits);
         dlg.exec();
@@ -186,7 +185,7 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
     bool found = false;
     for(int i = 0; i < _msgs.size(); i++)
     {
-        const CANMessage msg = _msgs[i];
+        const CANMessage &msg = _msgs[i];
         if((msg.can == can) && (msg.id == id))
         {
             // match
@@ -205,10 +204,10 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
             else
             {
                 // noise log
-                QByteArray newmask = _msgs[i].bitmask;
-                for(int i2 = 0; i2 < _msgs[i].bitmask.size(); i2++)
+                QByteArray newmask = msg.bitmask;
+                for(int i2 = 0; i2 < msg.bitmask.size(); i2++)
                 {
-                    newmask[i2] = (quint8)_msgs[i].bitmask[i2] & ~((quint8)_msgs[i].data[i2] ^ (quint8)data[i2]);
+                    newmask[i2] = (quint8)msg.bitmask[i2] & ~((quint8)msg.data[i2] ^ (quint8)data[i2]);
                 }
                 if(newmask != _msgs[i].bitmask)
                 {
@@ -220,7 +219,7 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
                     }
                 }
             }
-            if(_msgs[i].data != data)
+            if(msg.data != data)
             {
                 _msgs[i].data = data;
                 if(update) emit dataChanged(createIndex(i, DATA), createIndex(i, DATA));
@@ -244,7 +243,7 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
 
 void LogModel::applyMask(int ix, bool update)
 {
-    const CANMessage msg = _msgs[ix];
+    const CANMessage &msg = _msgs[ix];
 
     _msgs[ix].chbits.fill(0, msg.data.size());
     _msgs[ix].changeLog.clear();
@@ -252,10 +251,14 @@ void LogModel::applyMask(int ix, bool update)
 
     if(msg.log.empty()) return;
 
-    QByteArray lastData = msg.log[0].data;
-    for(int i = 1; i < msg.log.size(); i++)
+    QByteArray lastData;
+    foreach(const MessageLog &log, msg.log)
     {
-        const MessageLog log = msg.log[i];
+        if(lastData.isEmpty())
+        {
+            lastData = log.data;
+            continue;
+        }
 
         quint8 bytech;
         bool changed = false;
@@ -265,7 +268,7 @@ void LogModel::applyMask(int ix, bool update)
             if(bytech)
             {
                 changed = true;
-                _msgs[ix].chbits[i2] = (quint8)_msgs[ix].chbits[i2] | bytech;
+                _msgs[ix].chbits[i2] = (quint8)msg.chbits[i2] | bytech;
             }
         }
         if(changed)

@@ -2,7 +2,7 @@
 #define LOGMODEL_H
 
 #include <QAbstractTableModel>
-#include <QStyledItemDelegate>
+#include <QLinkedList>
 
 class MessageLog
 {
@@ -42,8 +42,8 @@ public:
     QByteArray data;
     QByteArray bitmask;
     QByteArray chbits;
-    QVector<MessageLog> log;
-    QVector<MessageLog> changeLog;
+    QLinkedList<MessageLog> log;
+    QLinkedList<MessageLog> changeLog;
 };
 
 class LogModel : public QAbstractTableModel
