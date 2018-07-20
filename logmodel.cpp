@@ -27,7 +27,7 @@ int LogModel::columnCount(const QModelIndex&) const
 QString toBin(const QByteArray &ba)
 {
     QString res;
-    res.fill('0', ba.size() * 9);
+    res.fill('0', ba.size() * 9 - 1);
     int cnt = 0;
     for(int i = 0; i < ba.size(); i++)
     {
@@ -40,7 +40,7 @@ QString toBin(const QByteArray &ba)
             }
             cnt++;
         }
-        res[cnt++] = ' ';
+        if(i < (ba.size() - 1)) res[cnt++] = ' ';
     }
     return res;
 }
