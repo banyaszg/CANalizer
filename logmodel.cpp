@@ -154,12 +154,7 @@ void LogModel::loadLog(QString fname)
         int percent = (file.pos() * 99 / file.size()) + 1;
         emit progressValue(percent);
     }
-    emit layoutChanged();
-    for(int i = 0; i < _msgs.size(); i++)
-    {
-        applyMask(i, false);
-    }
-    emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
+    applyMaskAll();
 }
 
 void LogModel::clear()
@@ -221,6 +216,27 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
             }
             if(msg.data != data)
             {
+                if(update)
+                {
+                    quint8 bytech;
+                    bool changed = false;
+                    for(int i2 = 0; i2 < msg.data.size(); i2++)
+                    {
+                        bytech = (((quint8)msg.data[i2] ^ (quint8)data[i2]) & (quint8)msg.bitmask[i2]);
+                        if(bytech)
+                        {
+                            changed = true;
+                            _msgs[i].chbits[i2] = (quint8)msg.chbits[i2] | bytech;
+                        }
+                    }
+                    if(changed)
+                    {
+                        _msgs[i].status = CANMessage::Changes;
+                        MessageLog chlog(sec, usec, data);
+                        _msgs[i].changeLog.append(chlog);
+                        emit dataChanged(createIndex(i, CHBITS), createIndex(i, CHCNT));
+                    }
+                }
                 _msgs[i].data = data;
                 if(update) emit dataChanged(createIndex(i, DATA), createIndex(i, DATA));
             }
@@ -239,6 +255,16 @@ void LogModel::procMessage(const QString &sec, const QString &usec, const QStrin
         _msgs.append(msg);
         if(update) emit layoutChanged();
     }
+}
+
+void LogModel::applyMaskAll()
+{
+    emit layoutChanged();
+    for(int i = 0; i < _msgs.size(); i++)
+    {
+        applyMask(i, false);
+    }
+    emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
 }
 
 void LogModel::applyMask(int ix, bool update)

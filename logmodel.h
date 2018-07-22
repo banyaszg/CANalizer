@@ -61,6 +61,8 @@ public:
 
     void setSignalState(bool signal) { _signal = signal; }
     bool signalState() { return _signal; }
+    void procMessage(const QString &sec, const QString &usec, const QString &can, const QString &id, const QByteArray &data, bool update = true);
+    void applyMaskAll();
 
 signals:
     void progressValue(int);
@@ -69,7 +71,6 @@ public slots:
     void onDoubleClicked(const QModelIndex &index);
 
 protected:
-    void procMessage(const QString &sec, const QString &usec, const QString &can, const QString &id, const QByteArray &data, bool update = true);
     void applyMask(int ix, bool update = true);
 
 protected:
