@@ -163,9 +163,11 @@ void MainWindow::framesReceived()
     while(canDevice->framesAvailable())
     {
         const QCanBusFrame frame = canDevice->readFrame();
-        model->procMessage(QString::number(frame.timeStamp().seconds(), 10),
-                           QString::number(frame.timeStamp().microSeconds(), 10),
-                           canInterface, QString::number(frame.frameId(), 16),
-                           frame.payload(), liveUpdate);
+        model->procMessage(
+                    QString("%1").arg(frame.timeStamp().seconds(), 10, 10, QChar('0')),
+                    QString("%1").arg(frame.timeStamp().microSeconds(), 6, 10, QChar('0')),
+                    canInterface,
+                    QString("%1").arg(frame.frameId(), 3, 16, QChar('0')),
+                    frame.payload(), liveUpdate);
     }
 }
