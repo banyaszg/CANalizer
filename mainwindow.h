@@ -5,6 +5,7 @@
 #include <QProgressBar>
 #include "logmodel.h"
 #include <QCanBusDevice>
+#include <QSortFilterProxyModel>
 
 namespace Ui {
 class MainWindow;
@@ -35,6 +36,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     LogModel *model = nullptr;
+    QSortFilterProxyModel *proxymodel = nullptr;
     QProgressBar *progressBar = nullptr;
     QCanBusDevice *canDevice = nullptr;
     QString canInterface;

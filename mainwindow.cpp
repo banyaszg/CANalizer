@@ -13,8 +13,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     model = new LogModel(this);
     ui->setupUi(this);
-    ui->tableView->setModel(model);
+
+    proxymodel = new QSortFilterProxyModel(this);
+    proxymodel->setSourceModel(model);
+    ui->tableView->setModel(proxymodel);
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->tableView->sortByColumn(1, Qt::AscendingOrder);
 
     connect(ui->tableView, &QTableView::doubleClicked, model, &LogModel::onDoubleClicked);
 
