@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tableView->sortByColumn(1, Qt::AscendingOrder);
 
-    connect(ui->tableView, &QTableView::doubleClicked, model, &LogModel::onDoubleClicked);
+    connect(ui->tableView, &QTableView::doubleClicked, this, &MainWindow::onDoubleClicked);
 
     progressBar = new QProgressBar(this);
     progressBar->setMaximumHeight(16);
@@ -174,4 +174,40 @@ void MainWindow::on_actionGenMask_toggled(bool arg1)
 void MainWindow::on_actionClearStatus_triggered()
 {
     model->clearStatus();
+}
+
+void MainWindow::on_actionClearMasks_triggered()
+{
+    model->clearMasks();
+}
+
+void MainWindow::on_actionClearChanges_triggered()
+{
+    model->clearChanges();
+}
+
+void MainWindow::on_actionFiltering_toggled(bool arg1)
+{
+    model->setFiltering(arg1);
+}
+
+void MainWindow::on_actionAddID_triggered()
+{
+    proxymodel->insertRow(proxymodel->rowCount());
+}
+
+void MainWindow::on_actionRemoveIDs_triggered()
+{
+    QModelIndexList indexes =  ui->tableView->selectionModel()->selectedRows();
+    int countRow = indexes.count();
+
+    for(int i = (countRow - 1); i >= 0; i--)
+    {
+        proxymodel->removeRow(indexes[i].row(), QModelIndex());
+    }
+}
+
+void MainWindow::onDoubleClicked(const QModelIndex &index)
+{
+    model->onDoubleClicked(proxymodel->mapToSource(index));
 }

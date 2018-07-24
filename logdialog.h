@@ -14,7 +14,7 @@ class LogDialog : public QDialog
     friend class LogModel;
 
 public:
-    explicit LogDialog(QWidget *parent, const QString &title, const QLinkedList<MessageLog> &log, const QByteArray &mask);
+    explicit LogDialog(QWidget *parent, const QString &can, quint16 id, quint8 length, const QLinkedList<MessageLog> &log, quint64 mask);
     ~LogDialog();
 
 private:

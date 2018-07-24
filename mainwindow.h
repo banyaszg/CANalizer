@@ -28,10 +28,14 @@ private slots:
     void on_actionStopCapture_triggered();
     void errorOccurred(QCanBusDevice::CanBusError) const;
     void framesReceived();
-
     void on_actionGenMask_toggled(bool arg1);
-
     void on_actionClearStatus_triggered();
+    void on_actionClearMasks_triggered();
+    void on_actionClearChanges_triggered();
+    void on_actionFiltering_toggled(bool arg1);
+    void on_actionAddID_triggered();
+    void on_actionRemoveIDs_triggered();
+    void onDoubleClicked(const QModelIndex &index);
 
 private:
     Ui::MainWindow *ui;

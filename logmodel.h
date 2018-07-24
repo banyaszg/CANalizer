@@ -8,16 +8,16 @@ class MessageLog
 {
 public:
     MessageLog() {}
-    MessageLog(quint64 sec, quint32 usec, const QByteArray &data)
+    MessageLog(quint64 sec, quint32 usec, quint64 data)
     {
         this->sec = sec;
         this->usec = usec;
         this->data = data;
     }
 
-    quint64 sec;
-    quint32 usec;
-    QByteArray data;
+    quint64 sec = 0;
+    quint32 usec = 0;
+    quint64 data = 0;
 };
 
 class CANMessage
@@ -26,22 +26,18 @@ public:
     enum Status { None, New, Changes };
 
     CANMessage() { status = None; }
-    CANMessage(const QString &can, quint16 id, const QByteArray &data)
-    {
-        this->can = can;
-        this->id = id;
-        this->data = data;
-        status = None;
-        bitmask.fill(0xff, data.size());
-        chbits.fill(0, data.size());
-    }
+    CANMessage(const QString &can, quint16 id, const QByteArray &data);
+
+    void setLength(quint8 len);
 
     QString can;
-    quint16 id;
+    quint16 id = 0;
     Status status;
-    QByteArray data;
-    QByteArray bitmask;
-    QByteArray chbits;
+    quint64 data = 0;
+    quint8 length = 0;
+    quint64 mask = 0;
+    quint64 bitmask = 0;
+    quint64 chbits = 0;
     QLinkedList<MessageLog> changeLog;
 };
 
@@ -54,10 +50,16 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    Qt::ItemFlags flags(const QModelIndex &index) const override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
+    bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
     void loadLog(QString fname);
     void clearAll();
     void clearStatus();
+    void clearMasks();
+    void clearChanges();
 
     void setLogChange(bool val) { _logChange = val; if(val) { clearStatus(); _genMask = false; } }
     bool logChange() { return _logChange; }
@@ -82,5 +84,8 @@ protected:
     bool _filtering = false;
     QVector<CANMessage> _msgs;
 };
+
+QString toHex(quint64 value, quint8 length);
+QString toBin(quint64 value, quint8 length);
 
 #endif // LOGMODEL_H
