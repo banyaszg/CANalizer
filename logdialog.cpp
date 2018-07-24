@@ -32,7 +32,9 @@ LogDialog::LogDialog(QWidget *parent, const QString &title, const QLinkedList<Me
     int i = 0;
     foreach(const MessageLog &item, log)
     {
-        QTableWidgetItem *timeItem = new QTableWidgetItem(QString("%1.%2").arg(item.sec).arg(item.usec));
+        QTableWidgetItem *timeItem = new QTableWidgetItem(QString("%1.%2")
+                                                          .arg(item.sec, 10, 10, QChar('0'))
+                                                          .arg(item.usec, 6, 10, QChar('0')));
         ui->tableWidget->setItem(i, 0, timeItem);
         QTableWidgetItem *dataItem = new QTableWidgetItem(QString(item.data.toHex()));
         ui->tableWidget->setItem(i, 1, dataItem);

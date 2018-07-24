@@ -19,14 +19,18 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_actionClear_triggered();
+    void on_actionClearAll_triggered();
     void on_actionLoad_triggered();
-    void on_actionSignal_toggled(bool arg1);
+    void on_actionChanges_toggled(bool arg1);
     void on_actionExit_triggered();
     void on_actionStartCapture_triggered();
     void on_actionStopCapture_triggered();
     void errorOccurred(QCanBusDevice::CanBusError) const;
     void framesReceived();
+
+    void on_actionGenMask_toggled(bool arg1);
+
+    void on_actionClearStatus_triggered();
 
 private:
     Ui::MainWindow *ui;

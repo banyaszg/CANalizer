@@ -8,15 +8,15 @@ class MessageLog
 {
 public:
     MessageLog() {}
-    MessageLog(const QString &sec, const QString &usec, const QByteArray &data)
+    MessageLog(quint64 sec, quint32 usec, const QByteArray &data)
     {
         this->sec = sec;
         this->usec = usec;
         this->data = data;
     }
 
-    QString sec;
-    QString usec;
+    quint64 sec;
+    quint32 usec;
     QByteArray data;
 };
 
@@ -26,7 +26,7 @@ public:
     enum Status { None, New, Changes };
 
     CANMessage() { status = None; }
-    CANMessage(const QString &can, const QString &id, const QByteArray &data)
+    CANMessage(const QString &can, quint16 id, const QByteArray &data)
     {
         this->can = can;
         this->id = id;
@@ -37,12 +37,11 @@ public:
     }
 
     QString can;
-    QString id;
+    quint16 id;
     Status status;
     QByteArray data;
     QByteArray bitmask;
     QByteArray chbits;
-    QLinkedList<MessageLog> log;
     QLinkedList<MessageLog> changeLog;
 };
 
@@ -57,12 +56,16 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     void loadLog(QString fname);
-    void clear();
+    void clearAll();
+    void clearStatus();
 
-    void setSignalState(bool signal) { _signal = signal; }
-    bool signalState() { return _signal; }
-    void procMessage(const QString &sec, const QString &usec, const QString &can, const QString &id, const QByteArray &data, bool update = true);
-    void applyMaskAll();
+    void setLogChange(bool val) { _logChange = val; if(val) { clearStatus(); _genMask = false; } }
+    bool logChange() { return _logChange; }
+    void setGenMask(bool val) { _genMask = val; if(val) { clearStatus(); _logChange = false; } }
+    bool genMask() { return _genMask; }
+    void setFiltering(bool val) { _filtering = val; }
+    bool filtering() { return _filtering; }
+    void procMessage(quint64 sec, quint32 usec, const QString &can, quint16 id, const QByteArray &data, bool update = true);
 
 signals:
     void progressValue(int);
@@ -74,7 +77,9 @@ protected:
     void applyMask(int ix, bool update = true);
 
 protected:
-    bool _signal;
+    bool _logChange = false;
+    bool _genMask = false;
+    bool _filtering = false;
     QVector<CANMessage> _msgs;
 };
 

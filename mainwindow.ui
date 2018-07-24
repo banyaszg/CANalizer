@@ -43,12 +43,20 @@
     </property>
     <addaction name="actionStartCapture"/>
     <addaction name="actionStopCapture"/>
-    <addaction name="actionClear"/>
     <addaction name="separator"/>
-    <addaction name="actionSignal"/>
+    <addaction name="actionGenMask"/>
+    <addaction name="actionChanges"/>
+   </widget>
+   <widget class="QMenu" name="menuClear">
+    <property name="title">
+     <string>Clear</string>
+    </property>
+    <addaction name="actionClearAll"/>
+    <addaction name="actionClearStatus"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuCapture"/>
+   <addaction name="menuClear"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -60,13 +68,17 @@
    <addaction name="actionLoad"/>
    <addaction name="actionStartCapture"/>
    <addaction name="actionStopCapture"/>
-   <addaction name="actionClear"/>
-   <addaction name="actionSignal"/>
+   <addaction name="actionClearAll"/>
+   <addaction name="actionGenMask"/>
+   <addaction name="actionChanges"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionClear">
+  <action name="actionClearAll">
    <property name="text">
-    <string>&amp;Clear</string>
+    <string>&amp;Clear All</string>
+   </property>
+   <property name="toolTip">
+    <string>Clear All</string>
    </property>
   </action>
   <action name="actionLoad">
@@ -74,12 +86,15 @@
     <string>&amp;Load log</string>
    </property>
   </action>
-  <action name="actionSignal">
+  <action name="actionChanges">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>&amp;Signal</string>
+    <string>Changes</string>
+   </property>
+   <property name="toolTip">
+    <string>Log changes</string>
    </property>
   </action>
   <action name="actionStartCapture">
@@ -98,6 +113,22 @@
   <action name="actionExit">
    <property name="text">
     <string>&amp;Exit</string>
+   </property>
+  </action>
+  <action name="actionGenMask">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>GenMask</string>
+   </property>
+   <property name="toolTip">
+    <string>Generate Mask</string>
+   </property>
+  </action>
+  <action name="actionClearStatus">
+   <property name="text">
+    <string>Clear Status</string>
    </property>
   </action>
  </widget>

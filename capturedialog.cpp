@@ -2,7 +2,7 @@
 #include "ui_capturedialog.h"
 #include <QtSerialBus/QCanBus>
 
-CaptureDialog::CaptureDialog(const QString &plugin, const QString &interface, bool live, QWidget *parent) :
+CaptureDialog::CaptureDialog(const QString &plugin, const QString &interface, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CaptureDialog)
 {
@@ -10,7 +10,6 @@ CaptureDialog::CaptureDialog(const QString &plugin, const QString &interface, bo
     ui->selectPlugin->addItems(QCanBus::instance()->plugins());
     ui->selectPlugin->setCurrentText(plugin);
     ui->selectInterface->setCurrentText(interface);
-    ui->checkLive->setChecked(live);
 }
 
 CaptureDialog::~CaptureDialog()
@@ -26,11 +25,6 @@ QString CaptureDialog::plugin()
 QString CaptureDialog::interface()
 {
     return ui->selectInterface->currentText();
-}
-
-bool CaptureDialog::live()
-{
-    return (ui->checkLive->checkState() == Qt::Checked);
 }
 
 void CaptureDialog::on_selectPlugin_currentTextChanged(const QString &arg1)

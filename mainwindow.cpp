@@ -33,9 +33,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_actionClear_triggered()
+void MainWindow::on_actionClearAll_triggered()
 {
-    model->clear();
+    model->clearAll();
 }
 
 void MainWindow::on_actionLoad_triggered()
@@ -66,9 +66,10 @@ void MainWindow::on_actionLoad_triggered()
     }
 }
 
-void MainWindow::on_actionSignal_toggled(bool arg1)
+void MainWindow::on_actionChanges_toggled(bool arg1)
 {
-    model->setSignalState(arg1);
+    if(arg1) ui->actionGenMask->setChecked(false);
+    model->setLogChange(arg1);
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -80,19 +81,15 @@ void MainWindow::on_actionStartCapture_triggered()
 {
     const QString DEFAULT_CANPLUGIN_KEY("can_plugin");
     const QString DEFAULT_CANIF_KEY("can_interface");
-    const QString DEFAULT_LIVEUPDATE_KEY("live_update");
 
     QSettings settings;
     CaptureDialog dlg(settings.value(DEFAULT_CANPLUGIN_KEY).toString(),
-                      settings.value(DEFAULT_CANIF_KEY).toString(),
-                      settings.value(DEFAULT_LIVEUPDATE_KEY).toBool());
+                      settings.value(DEFAULT_CANIF_KEY).toString());
     if(dlg.exec() == QDialog::Accepted)
     {
         settings.setValue(DEFAULT_CANPLUGIN_KEY, dlg.plugin());
         settings.setValue(DEFAULT_CANIF_KEY, dlg.interface());
-        settings.setValue(DEFAULT_LIVEUPDATE_KEY, dlg.live());
         canInterface = dlg.interface();
-        liveUpdate = dlg.live();
 
         QString errorString;
         canDevice = QCanBus::instance()->createDevice(dlg.plugin(), dlg.interface(), &errorString);
@@ -130,11 +127,6 @@ void MainWindow::on_actionStopCapture_triggered()
     delete canDevice;
     canDevice = nullptr;
 
-    if(!liveUpdate)
-    {
-        model->applyMaskAll();
-    }
-
     ui->actionLoad->setEnabled(true);
     ui->actionStartCapture->setEnabled(true);
     ui->actionStopCapture->setEnabled(false);
@@ -163,11 +155,19 @@ void MainWindow::framesReceived()
     while(canDevice->framesAvailable())
     {
         const QCanBusFrame frame = canDevice->readFrame();
-        model->procMessage(
-                    QString("%1").arg(frame.timeStamp().seconds(), 10, 10, QChar('0')),
-                    QString("%1").arg(frame.timeStamp().microSeconds(), 6, 10, QChar('0')),
-                    canInterface,
-                    QString("%1").arg(frame.frameId(), 3, 16, QChar('0')),
-                    frame.payload(), liveUpdate);
+        model->procMessage(frame.timeStamp().seconds(), frame.timeStamp().microSeconds(),
+                    canInterface, frame.frameId(),
+                    frame.payload());
     }
+}
+
+void MainWindow::on_actionGenMask_toggled(bool arg1)
+{
+    if(arg1) ui->actionChanges->setChecked(false);
+    model->setGenMask(arg1);
+}
+
+void MainWindow::on_actionClearStatus_triggered()
+{
+    model->clearStatus();
 }

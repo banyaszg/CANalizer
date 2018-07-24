@@ -12,12 +12,11 @@ class CaptureDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit CaptureDialog(const QString &plugin, const QString &interface, bool live, QWidget *parent = 0);
+    explicit CaptureDialog(const QString &plugin, const QString &interface, QWidget *parent = 0);
     ~CaptureDialog();
 
     QString plugin();
     QString interface();
-    bool live();
 
 private slots:
     void on_selectPlugin_currentTextChanged(const QString &arg1);
