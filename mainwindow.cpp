@@ -5,6 +5,7 @@
 #include <QCanBus>
 #include <QCanBusFrame>
 #include "capturedialog.h"
+#include <QShortcut>
 #include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -29,7 +30,10 @@ MainWindow::MainWindow(QWidget *parent) :
     progressBar->setMinimum(0);
     progressBar->setMaximum(100);
 
-    liveUpdate = false;
+    QShortcut* del = new QShortcut(QKeySequence(Qt::Key_Delete), ui->tableView);
+    connect(del, SIGNAL(activated()), this, SLOT(on_actionRemoveIDs_triggered()));
+    QShortcut* ins = new QShortcut(QKeySequence(Qt::Key_Insert), ui->tableView);
+    connect(ins, SIGNAL(activated()), this, SLOT(on_actionAddID_triggered()));
 }
 
 MainWindow::~MainWindow()

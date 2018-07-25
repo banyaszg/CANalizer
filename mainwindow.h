@@ -44,7 +44,6 @@ private:
     QProgressBar *progressBar = nullptr;
     QCanBusDevice *canDevice = nullptr;
     QString canInterface;
-    bool liveUpdate;
 };
 
 #endif // MAINWINDOW_H

@@ -72,10 +72,10 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             return toHex(msg.data, msg.length);
         case BITMASK:
             if(role == Qt::EditRole) return QString("%1").arg(msg.bitmask, msg.length * 2, 16, QChar('0'));
-            return toBin(msg.bitmask, msg.length);
+            return toHex(msg.bitmask, msg.length);
         case CHBITS:
             if(role == Qt::EditRole) return QString("%1").arg(msg.chbits, msg.length * 2, 16, QChar('0'));
-            return toBin(msg.chbits, msg.length);
+            return toHex(msg.chbits, msg.length);
         case CHCNT:
             return QString::number(msg.changeLog.size(), 10);
         default:
@@ -104,16 +104,16 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         const CANMessage &msg = _msgs[index.row()];
         switch(index.column())
         {
-//        case CAN:
-//            return msg.can;
-//        case ID:
-//            return QString("%1").arg(msg.id, 3, 16, QChar('0'));
-//        case DATA:
-//            return toHex(msg.data, msg.length);
+        case CAN:
+            return msg.can;
+        case ID:
+            return QString("%1").arg(msg.id, 3, 16, QChar('0'));
+        case DATA:
+            return toBin(msg.data, msg.length);
         case BITMASK:
-            return toHex(msg.bitmask, msg.length);
+            return toBin(msg.bitmask, msg.length);
         case CHBITS:
-            return toHex(msg.chbits, msg.length);
+            return toBin(msg.chbits, msg.length);
 //        case CHCNT:
 //        {
 //            QString res;
