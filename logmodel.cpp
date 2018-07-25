@@ -6,12 +6,42 @@
 #include "logdialog.h"
 
 const QRegularExpression logReg("^\\((\\d+).(\\d+)\\)\\s(\\w+)\\s([0-9a-f]+)#([0-9a-f]*)$", QRegularExpression::CaseInsensitiveOption);
-enum Columns { CAN = 0, ID = 1, DATA = 2, MASK = 3, CHBITS = 4, CHCNT = 5, END = 6 };
+
+CANMessage::CANMessage(const QString &can, quint32 id, const QByteArray &data)
+{
+    status = None;
+    this->can = can;
+    this->id = id;
+    setLength(data.length());
+    this->data = 0;
+    for(int i = 0; i < length; i++)
+    {
+        this->data <<= 8;
+        this->data |= (quint8)data[i];
+    }
+}
+
+void CANMessage::setLength(quint8 len)
+{
+    if(length == len) return;
+    if(len > 8) return;
+
+    length = len;
+    mask = 0;
+    for(int i = 0; i < length; i++)
+    {
+        mask <<= 8;
+        mask |= 0xff;
+    }
+    data = 0;
+    bitmask = mask;
+    chbits = 0;
+    changeLog.clear();
+}
 
 LogModel::LogModel(QObject *parent)
     :QAbstractTableModel(parent)
 {
-    _signal = false;
 }
 
 int LogModel::rowCount(const QModelIndex&) const
@@ -24,30 +54,11 @@ int LogModel::columnCount(const QModelIndex&) const
     return END;
 }
 
-QString toBin(const QByteArray &ba)
-{
-    QString res;
-    res.fill('0', ba.size() * 9 - 1);
-    int cnt = 0;
-    for(int i = 0; i < ba.size(); i++)
-    {
-        const quint8 b = ba[i];
-        for(int i2 = 7; i2 >= 0; i2--)
-        {
-            if(b & (1 << i2))
-            {
-                res[cnt] = '1';
-            }
-            cnt++;
-        }
-        if(i < (ba.size() - 1)) res[cnt++] = ' ';
-    }
-    return res;
-}
-
 QVariant LogModel::data(const QModelIndex &index, int role) const
 {
-    if(role == Qt::DisplayRole)
+    if(!index.isValid()) return QVariant();
+
+    if((role == Qt::DisplayRole) || (role == Qt::EditRole))
     {
         const CANMessage &msg = _msgs[index.row()];
         switch(index.column())
@@ -55,15 +66,24 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         case CAN:
             return msg.can;
         case ID:
-            return msg.id;
+            return QString("%1").arg(msg.id, 3, 16, QChar('0'));
         case DATA:
-            return QString(msg.data.toHex());
-        case MASK:
-            return toBin(msg.bitmask);
+            return toHex(msg.data, msg.length);
+        case BITMASK:
+            if(role == Qt::EditRole) return QString("%1").arg(msg.bitmask, msg.length * 2, 16, QChar('0'));
+            return toHex(msg.bitmask, msg.length);
         case CHBITS:
-            return toBin(msg.chbits);
+            if(role == Qt::EditRole) return QString("%1").arg(msg.chbits, msg.length * 2, 16, QChar('0'));
+            return toHex(msg.chbits, msg.length);
         case CHCNT:
             return QString::number(msg.changeLog.size(), 10);
+        case NOTE:
+        {
+            if(role == Qt::EditRole) return msg.note;
+            QStringList lines = msg.note.split("\n", QString::SkipEmptyParts);
+            if(lines.size() <= 1) return msg.note;
+            return lines[0];
+        }
         default:
             return QVariant();
         }
@@ -71,7 +91,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     else if(role == Qt::ForegroundRole)
     {
         const CANMessage &msg = _msgs[index.row()];
-        if(index.column() == 1)
+        if(index.column() == ID)
         {
             switch(msg.status)
             {
@@ -87,15 +107,34 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     }
     else if(role == Qt::ToolTipRole)
     {
-        if(index.column() == CHCNT)
+        const CANMessage &msg = _msgs[index.row()];
+        switch(index.column())
         {
-            const CANMessage msg = _msgs[index.row()];
-            QString res;
-            foreach(const MessageLog &item, msg.changeLog)
-            {
-                res += QString("(%1.%2) %3\n").arg(item.sec).arg(item.usec).arg(QString(item.data.toHex()));
-            }
-            return res;
+        case CAN:
+            return msg.can;
+        case ID:
+            return QString("%1").arg(msg.id, 3, 16, QChar('0'));
+        case DATA:
+            return toBin(msg.data, msg.length);
+        case BITMASK:
+            return toBin(msg.bitmask, msg.length);
+        case CHBITS:
+            return toBin(msg.chbits, msg.length);
+//        case CHCNT:
+//        {
+//            QString res;
+//            foreach(const MessageLog &item, msg.changeLog)
+//            {
+//                res += QString("(%1.%2) %3\n").arg(item.sec, 10, 10, QChar('0'))
+//                        .arg(item.usec, 6, 10, QChar('0'))
+//                        .arg(item.data, msg.length * 2, 16, QChar('0'));
+//            }
+//            return res;
+//        }
+        case NOTE:
+            return msg.note;
+        default:
+            return QVariant();
         }
     }
     return QVariant();
@@ -110,23 +149,130 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
             switch(section)
             {
             case CAN:
-                return QString("can");
+                return QString("CAN");
             case ID:
-                return QString("id");
+                return QString("ID");
             case DATA:
-                return QString("data(hex)");
-            case MASK:
-                return QString("mask(bin)");
+                return QString("Data(hex)");
+            case BITMASK:
+                return QString("Mask(bin)");
             case CHBITS:
-                return QString("changing bits(bin)");
+                return QString("Changing bits(bin)");
             case CHCNT:
-                return QString("ch");
+                return QString("Ch");
+            case NOTE:
+                return QString("Note");
             default:
                 return QVariant();
             }
         }
     }
     return QVariant();
+}
+
+Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
+{
+    if(!index.isValid()) return Qt::ItemIsEnabled;
+
+    if((index.column() == CAN) || (index.column() == ID)
+            || (index.column() == BITMASK) || (index.column() == NOTE))
+    {
+        return (Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled);
+    }
+    return (Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+}
+
+bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if(!index.isValid()) return false;
+
+    if(role == Qt::EditRole)
+    {
+        if(index.column() == BITMASK)
+        {
+            QString sval = value.toString();
+
+            quint64 newMask= sval.toULongLong(nullptr, 16);
+            quint8 len = sval.length() / 2;
+
+            // no modification
+            if((_msgs[index.row()].bitmask == newMask) && (_msgs[index.row()].length == len)) return false;
+
+            _msgs[index.row()].setLength(len);
+            _msgs[index.row()].bitmask = newMask;
+            if((_msgs[index.row()].chbits & newMask) != _msgs[index.row()].chbits)
+            {
+                _msgs[index.row()].chbits = 0;
+                _msgs[index.row()].changeLog.clear();
+            }
+            emit dataChanged(createIndex(index.row(), 0), createIndex(index.row(), END - 1));
+            return true;
+        }
+        else if(index.column() == CAN)
+        {
+            QString newCan = value.toString();
+            // no modification
+            if(_msgs[index.row()].can == newCan) return false;
+
+            quint32 id = _msgs[index.row()].id;
+            for(int i = 0; i < _msgs.size(); i++)
+            {
+                if((i != index.row()) && (_msgs[i].can == newCan) && (_msgs[i].id == id))
+                    return false;
+            }
+            _msgs[index.row()].can = newCan;
+            _msgs[index.row()].setLength(0);
+            emit dataChanged(createIndex(index.row(), 0), createIndex(index.row(), END - 1));
+            return true;
+        }
+        else if(index.column() == ID)
+        {
+            quint32 newID = value.toString().toUInt(nullptr, 16);
+            // no modification
+            if(_msgs[index.row()].id == newID) return false;
+
+            QString can = _msgs[index.row()].can;
+            for(int i = 0; i < _msgs.size(); i++)
+            {
+                if((i != index.row()) && (_msgs[i].can == can) && (_msgs[i].id == newID))
+                    return false;
+            }
+            _msgs[index.row()].id = newID;
+            _msgs[index.row()].setLength(0);
+            emit dataChanged(createIndex(index.row(), 0), createIndex(index.row(), END - 1));
+            return true;
+        }
+        else if(index.column() == NOTE)
+        {
+            _msgs[index.row()].note = value.toString();
+            emit dataChanged(index, index);
+        }
+    }
+
+    return false;
+}
+
+bool LogModel::insertRows(int row, int count, const QModelIndex&)
+{
+    beginInsertRows(QModelIndex(), row, row + count - 1);
+
+    for(int i = 0; i < count; i++)
+    {
+        _msgs.insert(row, CANMessage());
+    }
+
+    endInsertRows();
+    return true;
+}
+
+bool LogModel::removeRows(int row, int count, const QModelIndex&)
+{
+    beginRemoveRows(QModelIndex(), row, row + count - 1);
+
+    _msgs.remove(row, count);
+
+    endRemoveRows();
+    return true;
 }
 
 void LogModel::loadLog(QString fname)
@@ -141,143 +287,142 @@ void LogModel::loadLog(QString fname)
         QRegularExpressionMatch match = logReg.match(line);
         if(match.hasMatch())
         {
-            QString sec = match.captured(1);
-            QString usec = match.captured(2);
+            QString ssec = match.captured(1);
+            QString susec = match.captured(2);
             QString can = match.captured(3);
-            QString id = match.captured(4);
+            QString sid = match.captured(4);
             QString sdata = match.captured(5);
 
             QByteArray data = QByteArray::fromHex(sdata.toUtf8());
 
-            procMessage(sec, usec, can, id, data, false);
+            procMessage(ssec.toULong(), susec.toUInt(), can, sid.toUInt(nullptr, 16), data, false);
         }
         int percent = (file.pos() * 99 / file.size()) + 1;
         emit progressValue(percent);
     }
-    emit layoutChanged();
+    emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
+}
+
+void LogModel::clearAll()
+{
+    beginRemoveRows(QModelIndex(), 0, _msgs.size() - 1);
+    _msgs.clear();
+    endRemoveRows();
+}
+
+void LogModel::clearStatus()
+{
     for(int i = 0; i < _msgs.size(); i++)
     {
-        applyMask(i, false);
+        _msgs[i].status = CANMessage::None;
     }
     emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
 }
 
-void LogModel::clear()
+void LogModel::clearMasks()
 {
-    _msgs.clear();
-    emit layoutChanged();
+    for(int i = 0; i < _msgs.size(); i++)
+    {
+        _msgs[i].bitmask = _msgs[i].mask;
+    }
+    emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
+}
+
+void LogModel::clearChanges()
+{
+    for(int i = 0; i < _msgs.size(); i++)
+    {
+        _msgs[i].chbits = 0;
+        _msgs[i].changeLog.clear();
+    }
+    emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
 }
 
 void LogModel::onDoubleClicked(const QModelIndex &index)
 {
+    if(!index.isValid()) return;
+
     if(index.column() == CHCNT)
     {
-        const CANMessage &msg = _msgs[index.row()];
-
-        LogDialog dlg(NULL, QString("%1:%2").arg(msg.can).arg(msg.id), msg.changeLog, msg.chbits);
+        LogDialog dlg(NULL, &_msgs[index.row()]);
         dlg.exec();
+        emit dataChanged(createIndex(index.row(), 0), createIndex(index.row(), END - 1));
     }
-
 }
 
-void LogModel::procMessage(const QString &sec, const QString &usec, const QString &can, const QString &id, const QByteArray &data, bool update)
+void LogModel::procMessage(quint64 sec, quint32 usec, const QString &can, quint32 id, const QByteArray &data, bool update)
 {
     bool found = false;
     for(int i = 0; i < _msgs.size(); i++)
     {
         const CANMessage &msg = _msgs[i];
-        if((msg.can == can) && (msg.id == id))
+        if((msg.can.isEmpty() || (msg.can == can)) && (msg.id == id))
         {
+            if(msg.can.isEmpty()) _msgs[i].can = can;
+            if(msg.length != data.length())
+            {
+                _msgs[i].setLength(data.length());
+            }
+
+            quint64 bdata = 0;
+            for(int i = 0; i < data.length(); i++)
+            {
+                bdata <<= 8;
+                bdata |= (quint8)data[i];
+            }
+
             // match
             found = true;
-            if(update && (msg.status == CANMessage::New)) _msgs[i].status = CANMessage::None;
-
-            if(_signal)
+            if(msg.data != bdata)
             {
-                // signal log
-                if(msg.log.empty() || (msg.log.last().data != data))
+                if(_logChange)
                 {
-                    MessageLog log(sec, usec, data);
-                    _msgs[i].log.append(log);
-                }
-            }
-            else
-            {
-                // noise log
-                QByteArray newmask = msg.bitmask;
-                for(int i2 = 0; i2 < msg.bitmask.size(); i2++)
-                {
-                    newmask[i2] = (quint8)msg.bitmask[i2] & ~((quint8)msg.data[i2] ^ (quint8)data[i2]);
-                }
-                if(newmask != _msgs[i].bitmask)
-                {
-                    _msgs[i].bitmask = newmask;
-                    if(update)
+                    quint64 change = ((msg.data ^ bdata) & msg.bitmask);
+                    if(change > 0)
                     {
-                        emit dataChanged(createIndex(i, MASK), createIndex(i, MASK));
-                        applyMask(i, update);
+                        _msgs[i].chbits |= change;
+                        _msgs[i].status = CANMessage::Changes;
+                        MessageLog chlog(sec, usec, bdata);
+                        _msgs[i].changeLog.append(chlog);
                     }
                 }
-            }
-            if(msg.data != data)
-            {
-                _msgs[i].data = data;
-                if(update) emit dataChanged(createIndex(i, DATA), createIndex(i, DATA));
+                else if(_genMask)
+                {
+                    // noise log
+                    _msgs[i].bitmask &= ~(msg.data ^ bdata);
+                }
+                _msgs[i].data = bdata;
+                if(update) emit dataChanged(createIndex(i, 0), createIndex(i, END - 1));
             }
             break;
         }
     }
-    if(!found)
+    if((!found) && (!_filtering))
     {
         CANMessage msg(can, id, data);
-        if(_signal)
-        {
-            msg.status = CANMessage::New;
-            MessageLog log(sec, usec, data);
-            msg.log.append(log);
-        }
+        msg.status = CANMessage::New;
+        beginInsertRows(QModelIndex(), _msgs.size(), _msgs.size());
         _msgs.append(msg);
-        if(update) emit layoutChanged();
+        endInsertRows();
     }
 }
 
-void LogModel::applyMask(int ix, bool update)
+QString toHex(quint64 value, quint8 length)
 {
-    const CANMessage &msg = _msgs[ix];
-
-    _msgs[ix].chbits.fill(0, msg.data.size());
-    _msgs[ix].changeLog.clear();
-    if(update) _msgs[ix].status = CANMessage::None;
-
-    if(msg.log.empty()) return;
-
-    QByteArray lastData;
-    foreach(const MessageLog &log, msg.log)
+    QString res = QString("%1").arg(value, length * 2, 16, QChar('0'));
+    for(int i = (length - 1); i > 0; i--)
     {
-        if(lastData.isEmpty())
-        {
-            lastData = log.data;
-            continue;
-        }
-
-        quint8 bytech;
-        bool changed = false;
-        for(int i2 = 0; i2 < log.data.size(); i2++)
-        {
-            bytech = (((quint8)lastData[i2] ^ (quint8)log.data[i2]) & (quint8)msg.bitmask[i2]);
-            if(bytech)
-            {
-                changed = true;
-                _msgs[ix].chbits[i2] = (quint8)msg.chbits[i2] | bytech;
-            }
-        }
-        if(changed)
-        {
-            if(update || (_msgs[ix].status != CANMessage::New)) _msgs[ix].status = CANMessage::Changes;
-            MessageLog chlog(log.sec, log.usec, log.data);
-            _msgs[ix].changeLog.append(chlog);
-        }
-        lastData = log.data;
+        res.insert(i * 2, ' ');
     }
-    if(update) emit dataChanged(createIndex(ix, CHBITS), createIndex(ix, CHCNT));
+    return res;
+}
+
+QString toBin(quint64 value, quint8 length)
+{
+    QString res = QString("%1").arg(value, length * 8, 2, QChar('0'));
+    for(int i = (length - 1); i > 0; i--)
+    {
+        res.insert(i * 8, ' ');
+    }
+    return res;
 }

@@ -4,9 +4,11 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+lessThan(QT_MAJOR_VERSION, 5) {
+    message("Cannot build current CANalizer sources with Qt version $${QT_VERSION}.")
+}
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core gui widgets serialbus
 
 TARGET = CANalizer
 TEMPLATE = app
@@ -16,11 +18,14 @@ CONFIG += c++14
 SOURCES += main.cpp\
         mainwindow.cpp \
     logmodel.cpp \
-    logdialog.cpp
+    logdialog.cpp \
+    capturedialog.cpp
 
 HEADERS  += mainwindow.h \
     logmodel.h \
-    logdialog.h
+    logdialog.h \
+    capturedialog.h
 
 FORMS    += mainwindow.ui \
-    logdialog.ui
+    logdialog.ui \
+    capturedialog.ui
