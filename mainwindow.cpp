@@ -214,3 +214,8 @@ void MainWindow::onDoubleClicked(const QModelIndex &index)
 {
     model->onDoubleClicked(proxymodel->mapToSource(index));
 }
+
+void MainWindow::on_actionRemoveStatic_triggered()
+{
+    model->removeZeros();
+}

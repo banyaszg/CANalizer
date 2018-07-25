@@ -39,6 +39,25 @@ void CANMessage::setLength(quint8 len)
     changeLog.clear();
 }
 
+void CANMessage::save(QTextStream &out)
+{
+    out << "CAN bus: " << can
+        << "  ID: " << QString("%1").arg(id, 3, 16, QChar('0')) << endl;
+    out << "Mask: " << toHex(bitmask, length) << endl;
+    out << "Changing bits: " << toHex(chbits, length) << endl << endl;
+    out << note << endl << endl;
+
+    foreach(const MessageLog &item, changeLog)
+    {
+        out << QString("%1.%2")
+               .arg(item.sec, 10, 10, QChar('0'))
+               .arg(item.usec, 6, 10, QChar('0')) << ";"
+            << toHex(item.data, length) << ";"
+            << toHex(item.data & chbits, length) << ";"
+            << item.note << endl;
+    }
+}
+
 LogModel::LogModel(QObject *parent)
     :QAbstractTableModel(parent)
 {
@@ -70,10 +89,10 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
         case DATA:
             return toHex(msg.data, msg.length);
         case BITMASK:
-            if(role == Qt::EditRole) return QString("%1").arg(msg.bitmask, msg.length * 2, 16, QChar('0'));
+//            if(role == Qt::EditRole) return QString("%1").arg(msg.bitmask, msg.length * 2, 16, QChar('0'));
             return toHex(msg.bitmask, msg.length);
         case CHBITS:
-            if(role == Qt::EditRole) return QString("%1").arg(msg.chbits, msg.length * 2, 16, QChar('0'));
+//            if(role == Qt::EditRole) return QString("%1").arg(msg.chbits, msg.length * 2, 16, QChar('0'));
             return toHex(msg.chbits, msg.length);
         case CHCNT:
             return QString::number(msg.changeLog.size(), 10);
@@ -191,6 +210,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         if(index.column() == BITMASK)
         {
             QString sval = value.toString();
+            sval.replace(" ", "");
 
             quint64 newMask= sval.toULongLong(nullptr, 16);
             quint8 len = sval.length() / 2;
@@ -305,9 +325,23 @@ void LogModel::loadLog(QString fname)
 
 void LogModel::clearAll()
 {
-    beginRemoveRows(QModelIndex(), 0, _msgs.size() - 1);
-    _msgs.clear();
-    endRemoveRows();
+    if(_filtering)
+    {
+        for(int i = 0; i < _msgs.size(); i++)
+        {
+            _msgs[i].status = CANMessage::None;
+            _msgs[i].bitmask = _msgs[i].mask;
+            _msgs[i].chbits = 0;
+            _msgs[i].changeLog.clear();
+        }
+        emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
+    }
+    else
+    {
+        beginRemoveRows(QModelIndex(), 0, _msgs.size() - 1);
+        _msgs.clear();
+        endRemoveRows();
+    }
 }
 
 void LogModel::clearStatus()
@@ -336,6 +370,17 @@ void LogModel::clearChanges()
         _msgs[i].changeLog.clear();
     }
     emit dataChanged(createIndex(0, 0), createIndex(_msgs.size() - 1, END - 1));
+}
+
+void LogModel::removeZeros()
+{
+    for(int i = (_msgs.size() - 1); i >= 0; i--)
+    {
+        if(_msgs[i].changeLog.isEmpty())
+        {
+            removeRow(i);
+        }
+    }
 }
 
 void LogModel::onDoubleClicked(const QModelIndex &index)

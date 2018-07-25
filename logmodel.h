@@ -3,6 +3,7 @@
 
 #include <QAbstractTableModel>
 #include <QLinkedList>
+#include <QTextStream>
 
 class MessageLog
 {
@@ -30,6 +31,7 @@ public:
     CANMessage(const QString &can, quint32 id, const QByteArray &data);
 
     void setLength(quint8 len);
+    void save(QTextStream &out);
 
     QString can;
     quint32 id = 0;
@@ -65,6 +67,7 @@ public:
     void clearStatus();
     void clearMasks();
     void clearChanges();
+    void removeZeros();
 
     void setLogChange(bool val) { _logChange = val; if(val) { clearStatus(); _genMask = false; } }
     bool logChange() { return _logChange; }

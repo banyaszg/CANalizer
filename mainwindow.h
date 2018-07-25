@@ -37,6 +37,8 @@ private slots:
     void on_actionRemoveIDs_triggered();
     void onDoubleClicked(const QModelIndex &index);
 
+    void on_actionRemoveStatic_triggered();
+
 private:
     Ui::MainWindow *ui;
     LogModel *model = nullptr;

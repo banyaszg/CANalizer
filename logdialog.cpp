@@ -16,7 +16,8 @@ LogDialog::LogDialog(QWidget *parent, CANMessage *pmsg) :
 
     ui->lineCAN->setText(_pmsg->can);
     ui->lineID->setText(QString("%1").arg(_pmsg->id, 3, 16, QChar('0')));
-    ui->lineMask->setText(toHex(_pmsg->chbits, _pmsg->length));
+    ui->lineMask->setText(toHex(_pmsg->bitmask, _pmsg->length));
+    ui->lineChBits->setText(toHex(_pmsg->chbits, _pmsg->length));
     ui->textNote->setText(_pmsg->note);
 
     ui->tableWidget->setColumnCount(END);
@@ -25,7 +26,7 @@ LogDialog::LogDialog(QWidget *parent, CANMessage *pmsg) :
     QStringList headers;
     headers.append(QString("Time"));
     headers.append(QString("Data(hex)"));
-    headers.append(QString("Masked Data(hex)"));
+    headers.append(QString("ChBits Masked(hex)"));
     headers.append(QString("Note"));
     ui->tableWidget->setHorizontalHeaderLabels(headers);
 
@@ -102,20 +103,6 @@ void LogDialog::on_btnSave_clicked()
         if(!file.open(QIODevice::WriteOnly | QFile::Truncate))
             return;
         QTextStream out(&file);
-        out << "CAN bus: " << _pmsg->can
-            << "  ID: " << QString("%1").arg(_pmsg->id, 3, 16, QChar('0')) << endl;
-        out << "Mask: " << toHex(_pmsg->bitmask, _pmsg->length) << endl;
-        out << "Changing bits: " << toHex(_pmsg->chbits, _pmsg->length) << endl << endl;
-        out << _pmsg->note << endl << endl;
-
-        foreach(const MessageLog &item, _pmsg->changeLog)
-        {
-            out << QString("%1.%2")
-                   .arg(item.sec, 10, 10, QChar('0'))
-                   .arg(item.usec, 6, 10, QChar('0')) << ";"
-                << toHex(item.data, _pmsg->length) << ";"
-                << toHex(item.data & _pmsg->chbits, _pmsg->length) << ";"
-                << item.note << endl;
-        }
+        _pmsg->save(out);
     }
 }

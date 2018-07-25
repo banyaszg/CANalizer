@@ -76,6 +76,7 @@
     <addaction name="actionFiltering"/>
     <addaction name="actionAddID"/>
     <addaction name="actionRemoveIDs"/>
+    <addaction name="actionRemoveStatic"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuCapture"/>
@@ -188,6 +189,14 @@
    </property>
    <property name="toolTip">
     <string>Remove selected IDs</string>
+   </property>
+  </action>
+  <action name="actionRemoveStatic">
+   <property name="text">
+    <string>Remove Static</string>
+   </property>
+   <property name="toolTip">
+    <string>Remove rows with 0 changes</string>
    </property>
   </action>
  </widget>
