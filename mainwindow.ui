@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>874</width>
-    <height>624</height>
+    <width>1120</width>
+    <height>670</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,7 +38,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>874</width>
+     <width>1120</width>
      <height>40</height>
     </rect>
    </property>
@@ -158,12 +158,12 @@
   </action>
   <action name="actionClearMasks">
    <property name="text">
-    <string>Clear Masks</string>
+    <string>Clear &amp;Masks</string>
    </property>
   </action>
   <action name="actionClearChanges">
    <property name="text">
-    <string>Clear Changes</string>
+    <string>C&amp;lear Changes</string>
    </property>
   </action>
   <action name="actionFiltering">
@@ -171,7 +171,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Filtering</string>
+    <string>&amp;Filtering</string>
    </property>
    <property name="toolTip">
     <string>No new IDs</string>
@@ -179,12 +179,12 @@
   </action>
   <action name="actionAddID">
    <property name="text">
-    <string>Add ID</string>
+    <string>&amp;Add ID</string>
    </property>
   </action>
   <action name="actionRemoveIDs">
    <property name="text">
-    <string>Remove IDs</string>
+    <string>&amp;Remove IDs</string>
    </property>
    <property name="toolTip">
     <string>Remove selected IDs</string>

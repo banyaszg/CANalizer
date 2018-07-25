@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>805</width>
-    <height>556</height>
+    <width>909</width>
+    <height>608</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,7 +99,24 @@
     </widget>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget"/>
+    <widget class="QTextEdit" name="textNote">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableWidget">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>5</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">

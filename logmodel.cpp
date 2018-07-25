@@ -6,7 +6,6 @@
 #include "logdialog.h"
 
 const QRegularExpression logReg("^\\((\\d+).(\\d+)\\)\\s(\\w+)\\s([0-9a-f]+)#([0-9a-f]*)$", QRegularExpression::CaseInsensitiveOption);
-enum Columns { CAN = 0, ID = 1, DATA = 2, BITMASK = 3, CHBITS = 4, CHCNT = 5, END = 6 };
 
 CANMessage::CANMessage(const QString &can, quint32 id, const QByteArray &data)
 {
@@ -78,6 +77,13 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
             return toHex(msg.chbits, msg.length);
         case CHCNT:
             return QString::number(msg.changeLog.size(), 10);
+        case NOTE:
+        {
+            if(role == Qt::EditRole) return msg.note;
+            QStringList lines = msg.note.split("\n", QString::SkipEmptyParts);
+            if(lines.size() <= 1) return msg.note;
+            return lines[0];
+        }
         default:
             return QVariant();
         }
@@ -85,7 +91,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
     else if(role == Qt::ForegroundRole)
     {
         const CANMessage &msg = _msgs[index.row()];
-        if(index.column() == 1)
+        if(index.column() == ID)
         {
             switch(msg.status)
             {
@@ -125,6 +131,8 @@ QVariant LogModel::data(const QModelIndex &index, int role) const
 //            }
 //            return res;
 //        }
+        case NOTE:
+            return msg.note;
         default:
             return QVariant();
         }
@@ -141,9 +149,9 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
             switch(section)
             {
             case CAN:
-                return QString("can");
+                return QString("CAN");
             case ID:
-                return QString("id");
+                return QString("ID");
             case DATA:
                 return QString("data(hex)");
             case BITMASK:
@@ -152,6 +160,8 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
                 return QString("changing bits(bin)");
             case CHCNT:
                 return QString("ch");
+            case NOTE:
+                return QString("note");
             default:
                 return QVariant();
             }
@@ -164,7 +174,8 @@ Qt::ItemFlags LogModel::flags(const QModelIndex &index) const
 {
     if(!index.isValid()) return Qt::ItemIsEnabled;
 
-    if((index.column() == CAN) || (index.column() == ID) || (index.column() == BITMASK))
+    if((index.column() == CAN) || (index.column() == ID)
+            || (index.column() == BITMASK) || (index.column() == NOTE))
     {
         return (Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled);
     }
@@ -230,6 +241,11 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             _msgs[index.row()].setLength(0);
             emit dataChanged(createIndex(index.row(), 0), createIndex(index.row(), END - 1));
             return true;
+        }
+        else if(index.column() == NOTE)
+        {
+            _msgs[index.row()].note = value.toString();
+            emit dataChanged(index, index);
         }
     }
 
@@ -328,12 +344,10 @@ void LogModel::onDoubleClicked(const QModelIndex &index)
 
     if(index.column() == CHCNT)
     {
-        const CANMessage &msg = _msgs[index.row()];
-
-        LogDialog dlg(NULL, msg.can, msg.id, msg.length, msg.changeLog, msg.chbits);
+        LogDialog dlg(NULL, &_msgs[index.row()]);
         dlg.exec();
+        emit dataChanged(createIndex(index.row(), 0), createIndex(index.row(), END - 1));
     }
-
 }
 
 void LogModel::procMessage(quint64 sec, quint32 usec, const QString &can, quint32 id, const QByteArray &data, bool update)

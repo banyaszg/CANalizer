@@ -18,6 +18,7 @@ public:
     quint64 sec = 0;
     quint32 usec = 0;
     quint64 data = 0;
+    QString note;
 };
 
 class CANMessage
@@ -39,11 +40,15 @@ public:
     quint64 bitmask = 0;
     quint64 chbits = 0;
     QLinkedList<MessageLog> changeLog;
+    QString note;
 };
 
 class LogModel : public QAbstractTableModel
 {
     Q_OBJECT
+
+    enum Columns { CAN = 0, ID = 1, DATA = 2, BITMASK = 3, CHBITS = 4, CHCNT = 5, NOTE = 6, END = 7 };
+
 public:
     LogModel(QObject *parent);
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
