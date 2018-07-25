@@ -153,15 +153,15 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation, int role
             case ID:
                 return QString("ID");
             case DATA:
-                return QString("data(hex)");
+                return QString("Data(hex)");
             case BITMASK:
-                return QString("mask(bin)");
+                return QString("Mask(bin)");
             case CHBITS:
-                return QString("changing bits(bin)");
+                return QString("Changing bits(bin)");
             case CHCNT:
-                return QString("ch");
+                return QString("Ch");
             case NOTE:
-                return QString("note");
+                return QString("Note");
             default:
                 return QVariant();
             }

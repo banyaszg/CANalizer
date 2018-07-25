@@ -58,9 +58,8 @@ void MainWindow::on_actionLoad_triggered()
 
     if(!selectedFile.isEmpty())
     {
-        QDir currentDir;
         settings.setValue(DEFAULT_DIR_KEY,
-                            currentDir.absoluteFilePath(selectedFile));
+                            QFileInfo(selectedFile).absolutePath());
 
         statusBar()->addPermanentWidget(progressBar, 0);
         statusBar()->showMessage(QString("Loading"));

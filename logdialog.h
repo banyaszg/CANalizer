@@ -25,6 +25,8 @@ private slots:
 
     void on_tableWidget_itemChanged(QTableWidgetItem *item);
 
+    void on_btnSave_clicked();
+
 protected:
     CANMessage *_pmsg = nullptr;
 

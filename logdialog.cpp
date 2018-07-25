@@ -1,6 +1,8 @@
 #include "logdialog.h"
 #include "ui_logdialog.h"
 #include <QDebug>
+#include <QFileDialog>
+#include <QSettings>
 
 LogDialog::LogDialog(QWidget *parent, CANMessage *pmsg) :
     QDialog(parent),
@@ -75,6 +77,45 @@ void LogDialog::on_tableWidget_itemChanged(QTableWidgetItem *item)
                 break;
             }
             i++;
+        }
+    }
+}
+
+void LogDialog::on_btnSave_clicked()
+{
+    const QString DEFAULT_DIR_KEY("default_dir");
+
+    QSettings settings;
+
+    QString selectedFile = QFileDialog::getSaveFileName(
+            this, QString("Select am outputfile"),
+                settings.value(DEFAULT_DIR_KEY).toString()
+                + QString("/%1-%2.txt").arg(_pmsg->can).arg(_pmsg->id, 3, 16, QChar('0')),
+                "Text files (*.txt)");
+
+    if(!selectedFile.isEmpty())
+    {
+        settings.setValue(DEFAULT_DIR_KEY,
+                            QFileInfo(selectedFile).absolutePath());
+
+        QFile file(selectedFile);
+        if(!file.open(QIODevice::WriteOnly | QFile::Truncate))
+            return;
+        QTextStream out(&file);
+        out << "CAN bus: " << _pmsg->can
+            << "  ID: " << QString("%1").arg(_pmsg->id, 3, 16, QChar('0')) << endl;
+        out << "Mask: " << toHex(_pmsg->bitmask, _pmsg->length) << endl;
+        out << "Changing bits: " << toHex(_pmsg->chbits, _pmsg->length) << endl << endl;
+        out << _pmsg->note << endl << endl;
+
+        foreach(const MessageLog &item, _pmsg->changeLog)
+        {
+            out << QString("%1.%2")
+                   .arg(item.sec, 10, 10, QChar('0'))
+                   .arg(item.usec, 6, 10, QChar('0')) << ";"
+                << toHex(item.data, _pmsg->length) << ";"
+                << toHex(item.data & _pmsg->chbits, _pmsg->length) << ";"
+                << item.note << endl;
         }
     }
 }
