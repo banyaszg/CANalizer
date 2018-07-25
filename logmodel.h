@@ -26,12 +26,12 @@ public:
     enum Status { None, New, Changes };
 
     CANMessage() { status = None; }
-    CANMessage(const QString &can, quint16 id, const QByteArray &data);
+    CANMessage(const QString &can, quint32 id, const QByteArray &data);
 
     void setLength(quint8 len);
 
     QString can;
-    quint16 id = 0;
+    quint32 id = 0;
     Status status;
     quint64 data = 0;
     quint8 length = 0;
@@ -67,7 +67,7 @@ public:
     bool genMask() { return _genMask; }
     void setFiltering(bool val) { _filtering = val; }
     bool filtering() { return _filtering; }
-    void procMessage(quint64 sec, quint32 usec, const QString &can, quint16 id, const QByteArray &data, bool update = true);
+    void procMessage(quint64 sec, quint32 usec, const QString &can, quint32 id, const QByteArray &data, bool update = true);
 
 signals:
     void progressValue(int);

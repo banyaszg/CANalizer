@@ -8,7 +8,7 @@
 const QRegularExpression logReg("^\\((\\d+).(\\d+)\\)\\s(\\w+)\\s([0-9a-f]+)#([0-9a-f]*)$", QRegularExpression::CaseInsensitiveOption);
 enum Columns { CAN = 0, ID = 1, DATA = 2, BITMASK = 3, CHBITS = 4, CHCNT = 5, END = 6 };
 
-CANMessage::CANMessage(const QString &can, quint16 id, const QByteArray &data)
+CANMessage::CANMessage(const QString &can, quint32 id, const QByteArray &data)
 {
     status = None;
     this->can = can;
@@ -203,7 +203,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
             // no modification
             if(_msgs[index.row()].can == newCan) return false;
 
-            quint16 id = _msgs[index.row()].id;
+            quint32 id = _msgs[index.row()].id;
             for(int i = 0; i < _msgs.size(); i++)
             {
                 if((i != index.row()) && (_msgs[i].can == newCan) && (_msgs[i].id == id))
@@ -216,7 +216,7 @@ bool LogModel::setData(const QModelIndex &index, const QVariant &value, int role
         }
         else if(index.column() == ID)
         {
-            quint16 newID = value.toString().toUInt(nullptr, 16);
+            quint32 newID = value.toString().toUInt(nullptr, 16);
             // no modification
             if(_msgs[index.row()].id == newID) return false;
 
@@ -336,7 +336,7 @@ void LogModel::onDoubleClicked(const QModelIndex &index)
 
 }
 
-void LogModel::procMessage(quint64 sec, quint32 usec, const QString &can, quint16 id, const QByteArray &data, bool update)
+void LogModel::procMessage(quint64 sec, quint32 usec, const QString &can, quint32 id, const QByteArray &data, bool update)
 {
     bool found = false;
     for(int i = 0; i < _msgs.size(); i++)

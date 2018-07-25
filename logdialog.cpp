@@ -1,7 +1,7 @@
 #include "logdialog.h"
 #include "ui_logdialog.h"
 
-LogDialog::LogDialog(QWidget *parent, const QString &can, quint16 id, quint8 length, const QLinkedList<MessageLog> &log, quint64 mask) :
+LogDialog::LogDialog(QWidget *parent, const QString &can, quint32 id, quint8 length, const QLinkedList<MessageLog> &log, quint64 mask) :
     QDialog(parent),
     ui(new Ui::LogDialog)
 {
