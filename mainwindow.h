@@ -39,6 +39,8 @@ private slots:
 
     void on_actionRemoveStatic_triggered();
 
+    void on_actionSaveFrames_triggered();
+
 private:
     Ui::MainWindow *ui;
     LogModel *model = nullptr;

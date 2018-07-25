@@ -77,6 +77,8 @@ public:
     bool filtering() { return _filtering; }
     void procMessage(quint64 sec, quint32 usec, const QString &can, quint32 id, const QByteArray &data, bool update = true);
 
+    void saveAllIDs(QTextStream &out);
+
 signals:
     void progressValue(int);
 

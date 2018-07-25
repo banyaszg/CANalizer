@@ -219,3 +219,27 @@ void MainWindow::on_actionRemoveStatic_triggered()
 {
     model->removeZeros();
 }
+
+void MainWindow::on_actionSaveFrames_triggered()
+{
+    const QString DEFAULT_DIR_KEY("default_dir");
+
+    QSettings settings;
+
+    QString selectedFile = QFileDialog::getSaveFileName(
+            this, QString("Select am outputfile"),
+                settings.value(DEFAULT_DIR_KEY).toString(),
+                "Text files (*.txt)");
+
+    if(!selectedFile.isEmpty())
+    {
+        settings.setValue(DEFAULT_DIR_KEY,
+                            QFileInfo(selectedFile).absolutePath());
+
+        QFile file(selectedFile);
+        if(!file.open(QIODevice::WriteOnly | QFile::Truncate))
+            return;
+        QTextStream out(&file);
+        model->saveAllIDs(out);
+    }
+}

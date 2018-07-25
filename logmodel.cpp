@@ -452,6 +452,15 @@ void LogModel::procMessage(quint64 sec, quint32 usec, const QString &can, quint3
     }
 }
 
+void LogModel::saveAllIDs(QTextStream &out)
+{
+    for(int i = 0; i < _msgs.size(); i++)
+    {
+        out << endl;
+        _msgs[i].save(out);
+    }
+}
+
 QString toHex(quint64 value, quint8 length)
 {
     QString res = QString("%1").arg(value, length * 2, 16, QChar('0'));
